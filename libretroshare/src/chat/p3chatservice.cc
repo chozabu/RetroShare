@@ -634,7 +634,8 @@ bool p3ChatService::checkForMessageSecurity(RsChatMsgItem *ci)
 	std::cerr << "Checking msg flags: " << std::hex << fl << std::endl;
 #endif
 
-	if(dynamic_cast<RsChatLobbyMsgItem*>(ci) != NULL)
+RsChatLobbyMsgItem *enemyitem = dynamic_cast<RsChatLobbyMsgItem*>(ci);
+	if(enemyitem != NULL)
 	{
 		if(fl != (RS_CHAT_FLAG_PRIVATE | RS_CHAT_FLAG_LOBBY))
 			std::cerr << "Warning: received chat lobby message with iconsistent flags " << std::hex << fl << std::dec << " from friend peer " << ci->PeerId() << std::endl;
@@ -648,6 +649,19 @@ bool p3ChatService::checkForMessageSecurity(RsChatMsgItem *ci)
 		std::cerr << "This message will be dropped."<< std::endl;
 		return false ;
 	}
+
+//Jenster check for enemy. cast already tested. again for simplicity
+if (enemyitem != NULL) {
+//RsChatLobbyMsgItem *enemyitem = dynamic_cast<RsChatLobbyMsgItem*>(ci);
+RsGxsId enemy_gxs_id = RsGxsId(enemyitem->signature.keyId);
+RsGxsId target_gxs_id = RsGxsId("806280f30c31948ed1787c417df7f54f");
+//std::cout<<"::"<<target_gxs_id << ":::" <<enemy_gxs_id <<"::"  <<std::endl;
+if(enemy_gxs_id == target_gxs_id) {
+std::cout << "Sworn EN3mY speekz!!! cast into purgatory!!" <<std::endl;
+//ci->message = "**I\'m a lumberjack and that\'s ok!**";return true;
+return false;
+}
+}
 
 	return true ;
 }
