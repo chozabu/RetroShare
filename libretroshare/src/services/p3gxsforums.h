@@ -29,6 +29,8 @@
 
 #include "retroshare/rsgxsforums.h"
 #include "gxs/rsgenexchange.h"
+#include "services/p3gxscommon.h"
+//#include "services/p3postbase.h"
 
 #include "util/rstickevent.h"
 
@@ -39,10 +41,12 @@
  *
  */
 
-class p3GxsForums: public RsGenExchange, public RsGxsForums, 
+class p3GxsForums: public RsGenExchange, public RsGxsForums,
 	public RsTickEvent	/* only needed for testing - remove after */
 {
 	public:
+
+	//bool calculateScores(time_t ref_time);
 
 	p3GxsForums(RsGeneralDataService* gds, RsNetworkExchangeService* nes, RsGixs* gixs);
 
@@ -52,6 +56,7 @@ virtual void service_tick();
 
 	protected:
 
+	p3GxsCommentService *mCommentService;
 
 virtual void notifyChanges(std::vector<RsGxsNotify*>& changes);
 
@@ -84,8 +89,43 @@ virtual bool createMsg(uint32_t &token, RsGxsForumMsg &msg);
  */
 virtual bool updateGroup(uint32_t &token, RsGxsForumGroup &group);
 
+	virtual bool getCommentData(const uint32_t &token, std::vector<RsGxsComment> &msgs)
+		{
+				return mCommentService->getGxsCommentData(token, msgs);
+		}
+
+	virtual bool getRelatedComments(const uint32_t &token, std::vector<RsGxsComment> &msgs)
+		{
+			return mCommentService->getGxsRelatedComments(token, msgs);
+		}
+
+	virtual bool createComment(uint32_t &token, RsGxsComment &msg)
+		{
+			return mCommentService->createGxsComment(token, msg);
+		}
+
+	virtual bool createVote(uint32_t &token, RsGxsVote &msg)
+		{
+			return mCommentService->createGxsVote(token, msg);
+		}
+
+	virtual bool acknowledgeComment(const uint32_t& token, std::pair<RsGxsGroupId, RsGxsMessageId>& msgId)
+		{
+			return acknowledgeMsg(token, msgId);
+		}
+
+	virtual bool acknowledgeVote(const uint32_t& token, std::pair<RsGxsGroupId, RsGxsMessageId>& msgId)
+		{
+			if (mCommentService->acknowledgeVote(token, msgId))
+			{
+				return true;
+			}
+			return acknowledgeMsg(token, msgId);
+		}
 
 	private:
+
+	void background_updateVoteCounts(const uint32_t &token);
 
 static uint32_t forumsAuthenPolicy();
 
@@ -117,6 +157,8 @@ bool generateGroup(uint32_t &token, std::string groupName);
 	std::vector<ForumDummyRef> mGenRefs;
 	RsGxsMessageId mGenThreadId;
 	
+	void background_requestUnprocessedGroup();
+	void background_tick();
 };
 
 #endif 

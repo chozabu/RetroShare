@@ -14,7 +14,16 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
@@ -39,7 +48,16 @@
           <enum>QFrame::Sunken</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <property name="margin">
+          <property name="leftMargin">
+           <number>2</number>
+          </property>
+          <property name="topMargin">
+           <number>2</number>
+          </property>
+          <property name="rightMargin">
+           <number>2</number>
+          </property>
+          <property name="bottomMargin">
            <number>2</number>
           </property>
           <item>
@@ -117,6 +135,12 @@
             <property name="sizeType">
              <enum>QSizePolicy::MinimumExpanding</enum>
             </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
            </spacer>
           </item>
           <item>
@@ -147,6 +171,9 @@
              <number>0</number>
             </property>
            </widget>
+          </item>
+          <item>
+           <widget class="GxsIdChooser" name="idChooser"/>
           </item>
           <item>
            <widget class="QComboBox" name="viewBox">
@@ -253,14 +280,14 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="7">
+         <item row="0" column="9">
           <widget class="QLabel" name="time_label">
            <property name="text">
             <string notr="true"/>
            </property>
           </widget>
          </item>
-         <item row="0" column="12">
+         <item row="0" column="14">
           <widget class="QPushButton" name="nextUnreadButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -296,7 +323,7 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="14">
+         <item row="0" column="16">
           <widget class="QPushButton" name="expandButton">
            <property name="maximumSize">
             <size>
@@ -322,21 +349,21 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="6">
+         <item row="0" column="8">
           <widget class="Line" name="line_2">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
           </widget>
          </item>
-         <item row="0" column="8">
+         <item row="0" column="10">
           <widget class="Line" name="line">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
           </widget>
          </item>
-         <item row="0" column="11">
+         <item row="0" column="13">
           <spacer name="horizontalSpacer_2">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -348,6 +375,24 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item row="0" column="6">
+          <widget class="QToolButton" name="voteUpButton">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../images.qrc">
+             <normaloff>:/images/vote_up.png</normaloff>:/images/vote_up.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="12">
+          <widget class="GxsIdLabel" name="by_label">
+           <property name="text">
+            <string notr="true"/>
+           </property>
+          </widget>
          </item>
          <item row="0" column="3">
           <widget class="QToolButton" name="previousButton">
@@ -384,6 +429,13 @@
            </property>
            <property name="autoRaise">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="11">
+          <widget class="QLabel" name="by_text_label">
+           <property name="text">
+            <string>By </string>
            </property>
           </widget>
          </item>
@@ -428,17 +480,14 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="10">
-          <widget class="GxsIdLabel" name="by_label">
+         <item row="0" column="7">
+          <widget class="QToolButton" name="voteDownButton">
            <property name="text">
-            <string notr="true"/>
+            <string>...</string>
            </property>
-          </widget>
-         </item>
-         <item row="0" column="9">
-          <widget class="QLabel" name="by_text_label">
-           <property name="text">
-            <string>By </string>
+           <property name="icon">
+            <iconset resource="../images.qrc">
+             <normaloff>:/images/vote_down.png</normaloff>:/images/vote_down.png</iconset>
            </property>
           </widget>
          </item>
@@ -460,24 +509,24 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>RSTextBrowser</class>
-   <extends>QTextBrowser</extends>
-   <header>gui/common/RSTextBrowser.h</header>
-  </customwidget>
-  <customwidget>
    <class>LineEditClear</class>
    <extends>QLineEdit</extends>
    <header location="global">gui/common/LineEditClear.h</header>
   </customwidget>
   <customwidget>
-   <class>SubscribeToolButton</class>
-   <extends>QToolButton</extends>
-   <header>gui/common/SubscribeToolButton.h</header>
-  </customwidget>
-  <customwidget>
    <class>RSTreeWidget</class>
    <extends>QTreeWidget</extends>
    <header>gui/common/RSTreeWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>RSTextBrowser</class>
+   <extends>QTextBrowser</extends>
+   <header>gui/common/RSTextBrowser.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SubscribeToolButton</class>
+   <extends>QToolButton</extends>
+   <header>gui/common/SubscribeToolButton.h</header>
   </customwidget>
   <customwidget>
    <class>GxsIdLabel</class>
@@ -489,6 +538,11 @@
    <extends>QLabel</extends>
    <header location="global">gui/common/ElidedLabel.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>GxsIdChooser</class>
+   <extends>QComboBox</extends>
+   <header>gui/gxs/GxsIdChooser.h</header>
   </customwidget>
  </customwidgets>
  <resources>

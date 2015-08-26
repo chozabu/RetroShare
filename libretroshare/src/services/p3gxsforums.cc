@@ -24,6 +24,7 @@
  */
 
 #include "services/p3gxsforums.h"
+#include "services/p3postbase.h"
 #include "serialiser/rsgxsforumitems.h"
 
 #include <retroshare/rsidentity.h>
@@ -33,6 +34,8 @@
 
 #include "retroshare/rsgxsflags.h"
 #include <stdio.h>
+
+#include <math.h>
 
 // For Dummy Msgs.
 #include "util/rsrandom.h"
@@ -46,6 +49,10 @@ RsGxsForums *rsGxsForums = NULL;
 
 const uint32_t GXSFORUMS_MSG_STORE_PERIOD = 60*60*24*31*12; // 12 months / 1 year
 
+#define POSTBASE_BACKGROUND_PROCESSING	0x0002
+#define PROCESSING_START_PERIOD		30
+#define PROCESSING_INC_PERIOD		15
+
 #define FORUM_TESTEVENT_DUMMYDATA	0x0001
 #define DUMMYDATA_PERIOD		60	// long enough for some RsIdentities to be generated.
 
@@ -54,15 +61,20 @@ const uint32_t GXSFORUMS_MSG_STORE_PERIOD = 60*60*24*31*12; // 12 months / 1 yea
 /********************************************************************************/
 
 p3GxsForums::p3GxsForums(RsGeneralDataService *gds, RsNetworkExchangeService *nes, RsGixs* gixs)
-    : RsGenExchange(gds, nes, new RsGxsForumSerialiser(), RS_SERVICE_GXS_TYPE_FORUMS, gixs, forumsAuthenPolicy(), GXSFORUMS_MSG_STORE_PERIOD), RsGxsForums(this)
+	: RsGenExchange(gds, nes, new RsGxsForumSerialiser(), RS_SERVICE_GXS_TYPE_FORUMS, gixs, forumsAuthenPolicy(), GXSFORUMS_MSG_STORE_PERIOD), RsGxsForums(this)
 {
 	// For Dummy Msgs.
 	mGenActive = false;
     mGenCount = 0;
     mGenToken = 0;
+    mCommentService = new p3GxsCommentService(this,  RS_SERVICE_GXS_TYPE_FORUMS);
 
-	// Test Data disabled in Repo.
+	// Test Data disabled in Repo
 	//RsTickEvent::schedule_in(FORUM_TESTEVENT_DUMMYDATA, DUMMYDATA_PERIOD);
+
+	//background_requestUnprocessedGroup();
+
+	RsTickEvent::schedule_in(POSTBASE_BACKGROUND_PROCESSING, PROCESSING_INC_PERIOD);
 
 }
 
@@ -82,7 +94,59 @@ RsServiceInfo p3GxsForums::getServiceInfo()
                 GXS_FORUMS_MIN_MAJOR_VERSION,
                 GXS_FORUMS_MIN_MINOR_VERSION);
 }
+void p3GxsForums::background_requestUnprocessedGroup()
+{
+#ifdef POSTBASE_DEBUG
+	std::cerr << "p3PostBase::background_requestUnprocessedGroup()";
+	std::cerr << std::endl;
+#endif // POSTBASE_DEBUG
 
+
+	/*RsGxsGroupId grpId;
+	{
+		RsStackMutex stack(m);
+		if (mBgProcessing)
+		{
+#ifdef POSTBASE_DEBUG
+            std::cerr << "p3PostBase::background_requestUnprocessedGroup() Already Active";
+            std::cerr << std::endl;
+#endif
+			return;
+		}
+		if (mBgGroupList.empty())
+		{
+#ifdef POSTBASE_DEBUG
+            std::cerr << "p3PostBase::background_requestUnprocessedGroup() No Groups to Process";
+            std::cerr << std::endl;
+#endif
+			return;
+		}
+
+		grpId = mBgGroupList.front();
+		mBgGroupList.pop_front();
+		mBgProcessing = true;
+	}*/
+
+//	background_requestGroupMsgs(grpId, true);
+}
+void p3GxsForums::background_tick()
+{
+
+#if 0
+	{
+		RsStackMutex stack(mPostBaseMtx); /********** STACK LOCKED MTX ******/
+		if (mBgGroupList.empty())
+		{
+			background_requestAllGroups();
+		}
+	}
+#endif
+
+	background_requestUnprocessedGroup();
+
+	RsTickEvent::schedule_in(POSTBASE_BACKGROUND_PROCESSING, PROCESSING_INC_PERIOD);
+
+}
 
 uint32_t p3GxsForums::forumsAuthenPolicy()
 {
@@ -573,6 +637,9 @@ void p3GxsForums::handle_event(uint32_t event_type, const std::string &elabel)
 	// stuff.
 	switch(event_type)
 	{
+	case POSTBASE_BACKGROUND_PROCESSING:
+		background_tick();
+		break;
 		case FORUM_TESTEVENT_DUMMYDATA:
 			generateDummyData();
 			break;
@@ -584,4 +651,49 @@ void p3GxsForums::handle_event(uint32_t event_type, const std::string &elabel)
 			break;
 	}
 }
+/*
+bool extractPostCache(const std::string &str, PostStats &s)
+{
+
+	uint32_t iupvotes, idownvotes, icomments;
+	if (3 == sscanf(str.c_str(), "%d %d %d", &icomments, &iupvotes, &idownvotes))
+	{
+		s.comments = icomments;
+		s.up_votes = iupvotes;
+		s.down_votes = idownvotes;
+		return true;
+	}
+	return false;
+}
+*/
+bool RsGxsForumMsg::calculateScores(time_t ref_time)
+{
+
+	PostStats stats;
+	extractPostCache(mMeta.mServiceString, stats);
+
+	mUpVotes = stats.up_votes;
+	mDownVotes = stats.down_votes;
+	mComments = stats.comments;
+	mHaveVoted = (mMeta.mMsgStatus & GXS_SERV::GXS_MSG_STATUS_VOTE_MASK);
+
+	time_t age_secs = ref_time - mMeta.mPublishTs;
+#define POSTED_AGESHIFT (2.0)
+#define POSTED_AGEFACTOR (3600.0)
+
+	mTopScore = ((int) mUpVotes - (int) mDownVotes);
+	if (mTopScore > 0)
+	{
+		// score drops with time.
+		mHotScore =  mTopScore / pow(POSTED_AGESHIFT + age_secs / POSTED_AGEFACTOR, 1.5);
+	}
+	else
+	{
+		// gets more negative with time.
+		mHotScore =  mTopScore * pow(POSTED_AGESHIFT + age_secs / POSTED_AGEFACTOR, 1.5);
+	}
+	mNewScore = -age_secs;
+
+	return true;
+}//*/
 

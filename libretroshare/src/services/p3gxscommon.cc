@@ -434,9 +434,15 @@ bool p3GxsCommentService::createGxsVote(uint32_t &token, RsGxsVote &vote)
 {
 	// NOTE Because we cannot do this operation immediately, we create a token, 
 	// and monitor acknowledgeTokenMsg ... to return correct answer.
-
+#define DEBUG_GXSCOMMON
 #ifdef DEBUG_GXSCOMMON
     std::cerr << "p3GxsCommentService::createGxsVote() GroupId: " << vote.mMeta.mGroupId;
+    std::cerr << std::endl;
+    std::cerr << "p3GxsCommentService::createGxsVote() mAuthorId: " << vote.mMeta.mAuthorId;
+    std::cerr << std::endl;
+    std::cerr << "p3GxsCommentService::createGxsVote() mMsgId: " << vote.mMeta.mMsgId;
+    std::cerr << std::endl;
+    std::cerr << "p3GxsCommentService::createGxsVote() mParentId: " << vote.mMeta.mParentId;
     std::cerr << std::endl;
 #endif
 
@@ -475,7 +481,7 @@ bool p3GxsCommentService::createGxsVote(uint32_t &token, RsGxsVote &vote)
 	RsGxsGrpMsgIdPair parentId(vote.mMeta.mGroupId, vote.mMeta.mParentId);
 
 	std::map<RsGxsGrpMsgIdPair, VoteHolder>::iterator it;
-	it = mPendingVotes.find(parentId);
+	it = mPendingVotes.find(parentId);//TODO FIXME SHOULD BE ENABLED!
 	if (it != mPendingVotes.end())
 	{
 		std::cerr << "p3GxsCommentService::createGxsVote() ERROR Already a pending vote!";
@@ -494,6 +500,8 @@ bool p3GxsCommentService::createGxsVote(uint32_t &token, RsGxsVote &vote)
 	std::vector<RsGxsMessageId> &vect_msgIds = msgIds[parentId.first];
 	vect_msgIds.push_back(parentId.second);
 
+    std::cerr << "p3GxsCommentService::createGxsVote() NO ERRORS";
+    std::cerr << std::endl;
 	uint32_t int_token;
 	mExchange->getTokenService()->requestMsgInfo(int_token, RS_TOKREQ_ANSTYPE_SUMMARY, opts, msgIds);
 	GxsTokenQueue::queueRequest(int_token, GXSCOMMENTS_VOTE_CHECK);

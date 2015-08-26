@@ -100,6 +100,10 @@ private slots:
 	void nextUnreadMessage();
 	void downloadAllFiles();
 
+	void makeUpVote();
+	void makeDownVote();
+	void submitVote(const RsGxsGrpMsgIdPair& msgId, bool up);
+
 	void changedViewBox();
 
 	void filterColumnChanged(int column);
@@ -109,7 +113,11 @@ private slots:
 	void fillThreadProgress(int current, int count);
 	void fillThreadStatus(QString text);
 
+signals:
+	void vote(const RsGxsGrpMsgIdPair& msgId, bool up);
+
 private:
+
 	void insertMessageData(const RsGxsForumMsg &msg);
 
 	void insertThreads();
@@ -141,6 +149,11 @@ private:
 	void requestMsgData_ReplyMessage(const RsGxsGrpMsgIdPair &msgId);
 	void loadMsgData_ReplyMessage(const uint32_t &token);
 
+	// votes
+	void acknowledgeVoteMsg(const uint32_t& token);
+	void loadVoteData(const uint32_t &token);
+
+
 private:
 	RsGxsGroupId mLastForumID;
 	RsGxsMessageId mThreadId;
@@ -171,6 +184,8 @@ private:
 	QList<RsGxsMessageId> mIgnoredMsgId;
 
 	Ui::GxsForumThreadWidget *ui;
+
+	uint32_t mTokenTypeVote;
 };
 
 #endif // GXSFORUMTHREADWIDGET_H

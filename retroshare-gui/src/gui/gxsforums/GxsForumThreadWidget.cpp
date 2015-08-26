@@ -94,6 +94,7 @@ GxsForumThreadWidget::GxsForumThreadWidget(const RsGxsGroupId &forumId, QWidget 
 	mTokenTypeInsertThreads = nextTokenType();
 	mTokenTypeMessageData = nextTokenType();
 	mTokenTypeReplyMessage = nextTokenType();
+	mTokenTypeVote = nextTokenType();
 
 	setUpdateWhenInvisible(true);
 
@@ -150,6 +151,10 @@ GxsForumThreadWidget::GxsForumThreadWidget(const RsGxsGroupId &forumId, QWidget 
 	connect(ui->filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterItems(QString)));
 	connect(ui->filterLineEdit, SIGNAL(filterChanged(int)), this, SLOT(filterColumnChanged(int)));
 
+	connect(ui->voteUpButton, SIGNAL(clicked()), this, SLOT(makeUpVote()));
+	connect(ui->voteDownButton, SIGNAL(clicked()), this, SLOT( makeDownVote()));
+
+	connect(this, SIGNAL(vote(RsGxsGrpMsgIdPair,bool)), this, SLOT(submitVote(RsGxsGrpMsgIdPair,bool)));
 	/* Set own item delegate */
 	RSItemDelegate *itemDelegate = new RSItemDelegate(this);
 	itemDelegate->setSpacing(QSize(0, 2));
@@ -312,6 +317,78 @@ void GxsForumThreadWidget::changeEvent(QEvent *e)
 		// remove compiler warnings
 		break;
 	}
+}
+
+void GxsForumThreadWidget::makeDownVote()
+{
+
+	/* just grab the ids of the current item */
+	QTreeWidgetItem *item = ui->threadTreeWidget->currentItem();
+	RsGxsGrpMsgIdPair msgId;
+	msgId.first = groupId();
+	msgId.second = RsGxsMessageId(item->data(COLUMN_THREAD_DATA, ROLE_THREAD_MSGID).toString().toStdString());
+
+	//ui->voteUpButton->setEnabled(false);
+	//ui->voteDownButton->setEnabled(false);
+
+	emit vote(msgId, false);
+}
+
+void GxsForumThreadWidget::makeUpVote()
+{
+	QTreeWidgetItem *item = ui->threadTreeWidget->currentItem();
+	RsGxsGrpMsgIdPair msgId;
+	msgId.first = groupId();
+	msgId.second = RsGxsMessageId(item->data(COLUMN_THREAD_DATA, ROLE_THREAD_MSGID).toString().toStdString());
+
+	//ui->voteUpButton->setEnabled(false);
+	//ui->voteDownButton->setEnabled(false);
+
+	emit vote(msgId, true);
+}
+void GxsForumThreadWidget::submitVote(const RsGxsGrpMsgIdPair &msgId, bool up)
+{
+	/* must grab AuthorId from Layout */
+	RsGxsId authorId;
+	switch (ui->idChooser->getChosenId(authorId)) {
+		case GxsIdChooser::KnowId:
+		case GxsIdChooser::UnKnowId:
+		break;
+		case GxsIdChooser::NoId:
+		case GxsIdChooser::None:
+		default:
+		std::cerr << "PostedListWidget::createPost() ERROR GETTING AuthorId!, Vote Failed";
+		std::cerr << std::endl;
+
+		QMessageBox::warning(this, tr("RetroShare"),tr("Please create or choose a Signing Id before Voting"), QMessageBox::Ok, QMessageBox::Ok);
+
+		return;
+	}//switch (ui.idChooser->getChosenId(authorId))
+
+	RsGxsVote vote;
+
+	vote.mMeta.mGroupId = msgId.first;
+	vote.mMeta.mThreadId = msgId.second;
+	vote.mMeta.mParentId = msgId.second;
+	vote.mMeta.mAuthorId = authorId;
+
+	if (up) {
+		vote.mVoteType = GXS_VOTE_UP;
+	} else { //if (up)
+		vote.mVoteType = GXS_VOTE_DOWN;
+	}//if (up)
+
+	std::cerr << "PostedListWidget::submitVote()";
+	std::cerr << std::endl;
+
+	std::cerr << "GroupId : " << vote.mMeta.mGroupId << std::endl;
+	std::cerr << "ThreadId : " << vote.mMeta.mThreadId << std::endl;
+	std::cerr << "ParentId : " << vote.mMeta.mParentId << std::endl;
+	std::cerr << "AuthorId : " << vote.mMeta.mAuthorId << std::endl;
+
+	uint32_t token;
+	rsGxsForums->createVote(token, vote);
+	mTokenQueue->queueRequest(token, TOKENREQ_MSGINFO, RS_TOKREQ_ANSTYPE_ACK, mTokenTypeVote);
 }
 
 static void removeMessages(std::map<RsGxsGroupId, std::vector<RsGxsMessageId> > &msgIds, QList<RsGxsMessageId> &removeMsgId)
@@ -1993,7 +2070,26 @@ void GxsForumThreadWidget::loadRequest(const TokenQueue *queue, const TokenReque
 			loadMsgData_ReplyMessage(req.mToken);
 			return;
 		}
+
+		if (req.mUserType == mTokenTypeVote) {
+			switch(req.mAnsType)
+			{
+				case RS_TOKREQ_ANSTYPE_ACK:
+					acknowledgeVoteMsg(req.mToken);
+					break;
+				default:
+					std::cerr << "Error, unexpected anstype:" << req.mAnsType << std::endl;
+					break;
+			}
+			return;
+		}
 	}
 
 	GxsMessageFrameWidget::loadRequest(queue, req);
+}
+void GxsForumThreadWidget::acknowledgeVoteMsg(const uint32_t &token)
+{
+	RsGxsGrpMsgIdPair msgId;
+
+	rsGxsForums->acknowledgeVote(token, msgId);
 }

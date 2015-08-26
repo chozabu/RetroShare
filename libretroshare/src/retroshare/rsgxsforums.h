@@ -32,6 +32,7 @@
 
 #include "retroshare/rstokenservice.h"
 #include "retroshare/rsgxsifacehelper.h"
+#include "retroshare/rsgxscommon.h"
 
 
 
@@ -49,6 +50,34 @@ class RsGxsForumGroup
 class RsGxsForumMsg
 {
 	public:
+	RsGxsForumMsg()
+	{
+		//mMeta.mMsgFlags = RsPosted::FLAG_MSGTYPE_POST;
+		mUpVotes = 0;
+		mDownVotes = 0;
+		mComments = 0;
+		mHaveVoted = false;
+
+        mHotScore = 0;
+        mTopScore = 0;
+        mNewScore = 0;
+    }
+
+    bool calculateScores(time_t ref_time);
+
+    bool     mHaveVoted;
+
+	// Calculated.
+	uint32_t mUpVotes;
+	uint32_t mDownVotes;
+	uint32_t mComments;
+
+
+	// and Calculated Scores:???
+	double  mHotScore;
+	double  mTopScore;
+	double  mNewScore;
+
 	RsMsgMetaData mMeta;
 	std::string mMsg; 
 };
@@ -59,7 +88,7 @@ class RsGxsForumMsg
 std::ostream &operator<<(std::ostream &out, const RsGxsForumGroup &group);
 std::ostream &operator<<(std::ostream &out, const RsGxsForumMsg &msg);
 
-class RsGxsForums: public RsGxsIfaceHelper
+class RsGxsForums: public RsGxsIfaceHelper, public RsGxsCommentService
 {
 	public:
 
@@ -83,6 +112,7 @@ virtual void setMessageReadStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgI
 
 virtual bool createGroup(uint32_t &token, RsGxsForumGroup &group) = 0;
 virtual bool createMsg(uint32_t &token, RsGxsForumMsg &msg) = 0;
+//virtual bool createVote(uint32_t &token, RsGxsVote &vote) = 0;
 
 /*!
  * To update forum group with new information
