@@ -32,6 +32,8 @@
 #include "serialiser/rsserial.h"
 //#include "serialiser/rstlvtypes.h"
 
+#include "serialiser/rsgxscommentitems.h"
+
 #include "rsgxsitems.h"
 #include "retroshare/rsgxsforums.h"
 
@@ -67,12 +69,12 @@ public:
 	RsGxsForumMsg mMsg;
 };
 
-class RsGxsForumSerialiser : public RsSerialType
+class RsGxsForumSerialiser : public RsGxsCommentSerialiser
 {
 public:
 
 	RsGxsForumSerialiser()
-	:RsSerialType(RS_PKT_VERSION_SERVICE, RS_SERVICE_GXS_TYPE_FORUMS)
+	:RsGxsCommentSerialiser(RS_SERVICE_GXS_TYPE_FORUMS)
 	{ return; }
 	virtual     ~RsGxsForumSerialiser() { return; }
 

@@ -44,6 +44,10 @@ uint32_t RsGxsForumSerialiser::size(RsItem *item)
 	{
 		return sizeGxsForumMsgItem(op_item);
 	}
+	else
+	{
+		return RsGxsCommentSerialiser::size(item);
+	}
 	std::cerr << "RsGxsForumSerialiser::size() ERROR invalid item" << std::endl;
 	return 0;
 }
@@ -60,6 +64,10 @@ bool RsGxsForumSerialiser::serialise(RsItem *item, void *data, uint32_t *size)
 	else if((op_item = dynamic_cast<RsGxsForumMsgItem*>(item)) != NULL)
 	{
 		return serialiseGxsForumMsgItem(op_item, data, size);
+	}
+	else
+	{
+		return RsGxsCommentSerialiser::serialise(item, data, size);
 	}
 	std::cerr << "RsGxsForumSerialiser::serialise() ERROR invalid item" << std::endl;
 	return false;
@@ -90,6 +98,7 @@ RsItem* RsGxsForumSerialiser::deserialise(void* data, uint32_t* size)
 			return deserialiseGxsForumMsgItem(data, size);
 			break;
 		default:
+		return RsGxsCommentSerialiser::deserialise(data, size);
 #ifdef GXSFORUM_DEBUG
 			std::cerr << "RsGxsForumSerialiser::deserialise(): unknown subtype";
 			std::cerr << std::endl;

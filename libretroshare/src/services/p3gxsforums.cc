@@ -245,6 +245,8 @@ void	p3GxsForums::service_tick()
 {
 	dummy_tick();
 	RsTickEvent::tick_events();
+	//GxsTokenQueue::checkRequests();
+	mCommentService->comment_tick();
 	return;
 }
 
