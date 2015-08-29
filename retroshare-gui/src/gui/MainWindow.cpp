@@ -579,7 +579,7 @@ void MainWindow::createTrayIcon()
     /** End of Icon Menu **/
 
     // Create the tray icon
-    trayIcon = new QSystemTrayIcon(this);
+    trayIcon = new RSTrayIcon(this);
     trayIcon->setToolTip(tr("RetroShare"));
     trayIcon->setContextMenu(trayMenu);
     trayIcon->setIcon(QIcon(IMAGE_NOONLINE));
@@ -677,6 +677,23 @@ void MainWindow::updateTrayCombine()
     updateFriends();
 }
 
+RSTrayIcon::RSTrayIcon(QObject *parent)
+    : QSystemTrayIcon(parent)
+{
+
+}
+
+bool RSTrayIcon::event(QEvent *event)
+{
+    std::cout << "eventfilter\n";
+    if (event->type() == QEvent::MouseMove) {
+        std::cout << "mousemove\n";
+        //QKeyEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        nowtime = time(0);
+    }
+    return QObject::event(event);
+}
+
 void MainWindow::updateStatus()
 {
     // This call is essential to remove locks due to QEventLoop re-entrance while asking gpg passwds. Dont' remove it!
@@ -714,7 +731,10 @@ void MainWindow::updateStatus()
         tray += "\n";
         tray += notifyToolTip;
     }
-    trayIcon->setToolTip(tray);
+    std::cout << "timenow: " << time(0) << " timethen: " << trayIcon->nowtime
+                 << " diff: " << time(0)-trayIcon->nowtime;
+    if (time(0)-trayIcon->nowtime < 5)
+        trayIcon->setToolTip(tray);
 }
 
 void MainWindow::updateFriends()

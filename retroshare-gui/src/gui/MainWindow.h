@@ -78,6 +78,16 @@ class BlogsDialog;
 class ApplicationWindow;
 #endif
 
+class RSTrayIcon : public QSystemTrayIcon
+{
+    Q_OBJECT
+public:
+    RSTrayIcon(QObject* parent);
+    time_t nowtime;
+protected:
+    bool event(QEvent *e);
+};
+
 class MainWindow : public RWindow
 {
   Q_OBJECT
@@ -255,7 +265,7 @@ private:
 
     QString nameAndLocation;
 
-    QSystemTrayIcon *trayIcon;
+    RSTrayIcon *trayIcon;
     QMenu *notifyMenu;
     QString notifyToolTip;
     QAction *toggleVisibilityAction, *toolAct;
